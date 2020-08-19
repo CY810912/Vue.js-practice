@@ -1,4 +1,4 @@
-# demo
+# demo Vue.js(CLI)
 
 > vue
 
