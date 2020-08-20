@@ -3,6 +3,9 @@
 
 <template>
     <div class="container my-3" id="app">
+        <div>
+            {{demo}}
+        </div>
         <div class="input-group mb-3">
             <div class="input-group-prepend"><span class="input-group-text" id="basic-addon1">待辦事項</span></div>
             <input class="form-control" type="text" placeholder="準備要做的任務" v-model="newTodo" @keyup.enter="addTodo"/>
@@ -45,29 +48,43 @@ export default {
     data() {
         return {
             newTodo:'',
-            todos: 
-            [
+            todos: [
                 {
                     id: '0',
                     title: 'hello',
                     completed: false
                 }
             ],
-            
             visibility: 'all',
             cacheTodo: {},
-            cacheTitle: ''
-
-            }
+            cacheTitle: '',
+            demo:''
+        }
     },
     created: function () {
-        this.getApi("https://eudora-hsj.github.io/Vue-practice/data/todolist.json");
+        var cros="https://cors-anywhere.herokuapp.com/"
+        var api="https://kefusystem.ccggww.me/api/get/list"
+        var ajaxAPI= cros + api
+        var ajaxAPI= cros + api
+        this.getApi(ajaxAPI);
     }, 
     methods: {
+        postApi: function(url){
+            axios({
+                method: 'post',
+                url: url + '8',
+                data: {
+                    id: '9',
+                    title: 'test',
+                    completed: false
+                }
+            })
+        },
         getApi: function(url){
             axios.get(url)
             .then((res) =>{
-                this.todos = res.data.data
+                this.todos = res.data.rows
+                this.demo = res.data.rows  //test
             })
             .catch((err)=>{
                 console.log(err)
@@ -76,6 +93,7 @@ export default {
         addTodo: function(){
             var value = this.newTodo.trim()
             var timestamp = Math.floor(Date.now())
+            this.postApi("https://kefusystem.ccggww.me/api/save/");
             if ( !value ) { return }
             this.todos.push(
                 {
