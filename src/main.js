@@ -4,10 +4,11 @@ import Vue from 'vue'
 import App from './App'
 import 'bootstrap'; // Import js file
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import css file
-window.axios = require('axios');  // https://stackoverflow.com/questions/51374367/axios-is-not-defined-in-vue-js-cli
+//tip:記得執行npm install喔不引入CDN了
 import axios from 'axios'
 
-Vue.prototype.$axios = axios
+Vue.prototype.$http = axios
+Vue.prototype.HOST = "/api"
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */

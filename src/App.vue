@@ -22,7 +22,7 @@
             </ul>
             </div>
             <ul class="list-group list-group-flush text-left">
-            <li class="list-group-item" v-for="item in filteredTodos" @dblclick="editTodo(item)">
+            <li class="list-group-item" v-for="(item,index) in filteredTodos" :key="index" @dblclick="editTodo(item)">
                 <div class="d-flex" v-if="item.id !== cacheTodo.id">
                 <div class="form-check">
                     <input class="form-check-input" :id="item.id" type="checkbox" v-model="item.completed"/>
@@ -62,38 +62,33 @@ export default {
         }
     },
     created: function () {
-        var cros="https://cors-anywhere.herokuapp.com/"
-        var api="https://kefusystem.ccggww.me/api/get/list"
-        var ajaxAPI= cros + api
-        var ajaxAPI= cros + api
-        this.getApi(ajaxAPI);
+        //tip:網址可以短是因爲在config/index.js做掉了proxy table那邊
+        //參考網站https://segmentfault.com/a/1190000014265711
+        this.getApi("/get/list");
     }, 
     methods: {
+        //tip:這裏複寫dopost方法
         postApi: function(url){
-            axios({
-                method: 'post',
-                url: url + '8',
-                data: {
-                    id: '9',
-                    title: 'test',
+            this.doPost(url+"/8",
+                {
+                    id: "9",
+                    title: "test",
                     completed: false
-                }
-            })
+                },(res)=>{
+                    console.log(res)
+                })
         },
+         //tip:這裏複寫dopost方法
         getApi: function(url){
-            axios.get(url)
-            .then((res) =>{
-                this.todos = res.data.rows
-                this.demo = res.data.rows  //test
-            })
-            .catch((err)=>{
-                console.log(err)
+            this.doGet(url,{},(res)=>{
+                this.todos = res.data.rows;
+                this.demo = res.data.rows; //test
             })
         },
         addTodo: function(){
             var value = this.newTodo.trim()
             var timestamp = Math.floor(Date.now())
-            this.postApi("https://kefusystem.ccggww.me/api/save/");
+            this.postApi("/save");
             if ( !value ) { return }
             this.todos.push(
                 {
@@ -125,7 +120,29 @@ export default {
         cleanTodo: function(todo){
             allTodo = this.todos
             allTodo.splice(0,allTodo.length)
-          },
+        },
+        //tip:這裏傳入 successFunction 然後使用IIFE
+        doGet(url, param,successFunction) {
+            this.$http.get(this.HOST+url,{
+                params:{
+                    ...param
+                }
+            }).then((req)=>{
+                successFunction(req)
+            })
+        },
+        //tip:這裏傳入 successFunction 然後使用IIFE
+        //header 變更爲josn不然原本是form
+        //參考網站：https://ithelp.ithome.com.tw/articles/10209714
+        doPost(url, data,successFunction) {
+            const headers={
+                'Content-Type': 'application/json',
+            };
+            const _this = this;
+            this.$http.post(this.HOST+url,`"${JSON.stringify(data).replace(/\"/g,"\\\"")}"`,{headers}).then((req)=>{
+                successFunction(req)
+            })
+        }
     },
     computed: {
         filteredTodos: function(){
@@ -146,6 +163,9 @@ export default {
                     })
             }
             return showList
+        },
+        getNewKey(){
+          return Math.max(...this.todos.map(p => +p.key)) //4
         },
         activeTodosLength: function(){
             return this.todos.filter(item => !item.completed ).length
