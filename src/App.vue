@@ -3,9 +3,9 @@
 
 <template>
     <div class="container my-3" id="app">
-        <div>
+        <!-- <div>
             {{demo}}
-        </div>
+        </div> -->
         <div class="input-group mb-3">
             <div class="input-group-prepend"><span class="input-group-text" id="basic-addon1">待辦事項</span></div>
             <input class="form-control" type="text" placeholder="準備要做的任務" v-model="newTodo" @keyup.enter="addTodo"/>
@@ -28,7 +28,7 @@
                     <input class="form-check-input" :id="item.id" type="checkbox" v-model="item.completed"/>
                     <label class="form-check-label" :for="item.id" :class="{'completed':item.completed}">{{ item.title }}</label>
                 </div>
-                <button class="close ml-auto" type="button" aria-label="Close" @click="removeTodo(item)"><span aria-hidden="true">×</span></button>
+                <button class="close ml-auto" type="button" aria-label="Close" @click="removeTodo(item.id)"><span aria-hidden="true">×</span></button>
                 </div>
                 <input class="form-control" type="text" v-model="cacheTitle" v-if="item.id == cacheTodo.id" @keyup.esc="cancelEdit" @keyup.enter="doneEdit(item)"/>
             </li>
@@ -64,7 +64,8 @@ export default {
     created: function () {
         //tip:網址可以短是因爲在config/index.js做掉了proxy table那邊
         //參考網站https://segmentfault.com/a/1190000014265711
-        this.getApi("/get/list");
+        this.getList();
+        // this.getApi("/get/list");
     }, 
     methods: {
         //tip:這裏複寫dopost方法
@@ -78,32 +79,29 @@ export default {
                     console.log(res)
                 })
         },
-         //tip:這裏複寫dopost方法
-        getApi: function(url){
-            this.doGet(url,{},(res)=>{
+        //  //tip:這裏複寫dopost方法
+        getList(){
+            this.doGet("/get/list",{},(res)=>{
                 this.todos = res.data.rows;
                 this.demo = res.data.rows; //test
             })
         },
         addTodo: function(){
-            var value = this.newTodo.trim()
+            var newTodoStr = this.newTodo.trim()
+            if ( !newTodoStr ) { return }
+            let submitData= {
+                id: timestamp,
+                title: newTodoStr,
+                computed: false
+            };
             var timestamp = Math.floor(Date.now())
-            this.postApi("/save");
-            if ( !value ) { return }
-            this.todos.push(
-                {
-                    id: timestamp,
-                    title: value,
-                    computed: false
-                }
-            ),
-            this.newTodo = ''
+            this.doPost(`/save/${submitData.id}`,submitData,(res)=>{
+                this.getList();
+                this.newTodo = '';
+            });
         },
-        removeTodo: function(todo){
-            var newIndex = this.todos.findIndex(function(item){
-                return todo.id === item.id
-            })
-            this.todos.splice(newIndex,1)
+        removeTodo: function(id){
+            this.doPost(`/del/${id}`,{},()=>{this.getList();})
           },
         editTodo: function(item){
             this.cacheTodo = item
@@ -122,8 +120,8 @@ export default {
             allTodo.splice(0,allTodo.length)
         },
         //tip:這裏傳入 successFunction 然後使用IIFE
-        doGet(url, param,successFunction) {
-            this.$http.get(this.HOST+url,{
+        doGet(url, param,successFunction){
+            this.$http.get(`${this.HOST}${url}`,{
                 params:{
                     ...param
                 }
@@ -165,7 +163,7 @@ export default {
             return showList
         },
         getNewKey(){
-          return Math.max(...this.todos.map(p => +p.key)) //4
+          return Math.max(...this.todos.map(el => +el.key)) //4
         },
         activeTodosLength: function(){
             return this.todos.filter(item => !item.completed ).length
